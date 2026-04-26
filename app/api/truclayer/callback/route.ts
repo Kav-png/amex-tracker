@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { after } from "next/server"
+import { cookies } from "next/headers"
 import { exchangeCode, getAccounts, getCards } from "@/lib/truclayer/client"
 import { syncTransactions } from "@/lib/truclayer/sync"
 import { createClient } from "@/lib/supabase/server"
@@ -9,11 +10,20 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL!
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
+  const state = searchParams.get("state")
   const error = searchParams.get("error")
 
   if (error || !code) {
-    const msg = error ?? "No authorisation code received"
-    return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent(msg)}`)
+    return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent("Connection failed")}`)
+  }
+
+  // Validate CSRF state
+  const cookieStore = await cookies()
+  const savedState = cookieStore.get("tl_oauth_state")?.value
+  cookieStore.delete("tl_oauth_state")
+
+  if (!savedState || !state || savedState !== state) {
+    return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent("Invalid session — please try again")}`)
   }
 
   const supabase = await createClient()
@@ -42,6 +52,7 @@ export async function GET(request: NextRequest) {
       }
       accountId = cards[0].account_id
     }
+
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
     await supabase.from("truclayer_connections").upsert(
@@ -55,13 +66,11 @@ export async function GET(request: NextRequest) {
       { onConflict: "user_id" }
     )
 
-    // Redirect immediately — sync runs after response is sent
     after(() => syncTransactions(supabase, user.id).catch(console.error))
 
     return NextResponse.redirect(`${APP_URL}/dashboard?syncing=1`)
   } catch (err) {
     console.error("TrueLayer callback error:", err)
-    const msg = err instanceof Error ? err.message : "Connection failed"
-    return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent(msg)}`)
+    return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent("Connection failed — please try again")}`)
   }
 }

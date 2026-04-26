@@ -35,7 +35,7 @@ export type TLTokens = {
   expires_in: number
 }
 
-export function buildOAuthUrl(): string {
+export function buildOAuthUrl(state: string): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: process.env.TRUCLAYER_CLIENT_ID!,
@@ -43,6 +43,7 @@ export function buildOAuthUrl(): string {
     redirect_uri: process.env.TRUCLAYER_REDIRECT_URI!,
     providers: SANDBOX ? "mock" : "amex",
     enable_mock: SANDBOX ? "true" : "false",
+    state,
   })
   return `${TL_AUTH_URL}/?${params.toString()}`
 }

@@ -39,7 +39,7 @@ export function buildOAuthUrl(): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: process.env.TRUCLAYER_CLIENT_ID!,
-    scope: "info accounts balance transactions offline_access",
+    scope: "info accounts cards balance transactions offline_access",
     redirect_uri: process.env.TRUCLAYER_REDIRECT_URI!,
     providers: SANDBOX ? "mock" : "amex",
     enable_mock: SANDBOX ? "true" : "false",

@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
     .update({ last_synced_at: new Date().toISOString() })
     .eq("user_id", user.id)
 
-  const { full } = await request.json().catch(() => ({ full: false }))
+  const body = await request.json().catch(() => ({}))
+  const full = body.full === true
 
   after(async () => {
     const fromDate = full

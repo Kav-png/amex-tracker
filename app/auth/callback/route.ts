@@ -8,9 +8,11 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin))
+      // Recovery sessions must land on reset-password, not dashboard
+      const destination = data.session?.user.recovery_sent_at ? "/reset-password" : next
+      return NextResponse.redirect(new URL(destination, origin))
     }
   }
 

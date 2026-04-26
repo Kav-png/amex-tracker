@@ -139,6 +139,9 @@ export default function LoginPage() {
                     </button>
                   </p>
                   <p>
+                    <a href="/forgot-password" className="underline text-gray-500">Forgot password?</a>
+                  </p>
+                  <p>
                     <button type="button" onClick={() => switchMode("magic")} className="underline text-gray-500">
                       Send a magic link instead
                     </button>

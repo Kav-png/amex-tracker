@@ -11,7 +11,7 @@ import { SyncButton } from "@/components/dashboard/SyncButton"
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; from?: string; to?: string; connected?: string }>
+  searchParams: Promise<{ range?: string; from?: string; to?: string; connected?: string; syncing?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -47,8 +47,8 @@ export default async function DashboardPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Spending</h1>
-          {params.connected && (
-            <p className="text-sm text-green-600 mt-0.5">AMEX connected — syncing history…</p>
+          {(params.connected || params.syncing) && (
+            <p className="text-sm text-green-600 mt-0.5">AMEX connected — syncing transactions in the background…</p>
           )}
         </div>
         {connection && <SyncButton />}

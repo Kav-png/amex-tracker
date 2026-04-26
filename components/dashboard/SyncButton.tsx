@@ -15,16 +15,21 @@ export function SyncButton() {
     setStatus("")
     try {
       const res = await fetch("/api/truclayer/sync", { method: "POST" })
-      const data = await res.json()
       if (res.ok) {
-        setStatus(`Synced ${data.synced} transactions`)
-        router.refresh()
+        setStatus("Syncing… refreshing shortly")
+        setTimeout(() => {
+          router.refresh()
+          setStatus("")
+          setLoading(false)
+        }, 8000)
       } else {
+        const data = await res.json()
         setStatus(data.error ?? "Sync failed")
+        setLoading(false)
+        setTimeout(() => setStatus(""), 4000)
       }
     } catch {
       setStatus("Network error")
-    } finally {
       setLoading(false)
       setTimeout(() => setStatus(""), 4000)
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { after } from "next/server"
 import { exchangeCode, getAccounts } from "@/lib/truclayer/client"
 import { syncTransactions } from "@/lib/truclayer/sync"
 import { createClient } from "@/lib/supabase/server"
@@ -44,9 +45,10 @@ export async function GET(request: NextRequest) {
       { onConflict: "user_id" }
     )
 
-    await syncTransactions(supabase, user.id)
+    // Redirect immediately — sync runs after response is sent
+    after(() => syncTransactions(supabase, user.id).catch(console.error))
 
-    return NextResponse.redirect(`${APP_URL}/dashboard?connected=1`)
+    return NextResponse.redirect(`${APP_URL}/dashboard?syncing=1`)
   } catch (err) {
     console.error("TrueLayer callback error:", err)
     const msg = err instanceof Error ? err.message : "Connection failed"

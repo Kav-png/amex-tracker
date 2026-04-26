@@ -44,8 +44,7 @@ export async function GET(request: NextRequest) {
       { onConflict: "user_id" }
     )
 
-    // Kick off initial historical sync (background — don't await in full)
-    syncTransactions(supabase, user.id).catch(console.error)
+    await syncTransactions(supabase, user.id)
 
     return NextResponse.redirect(`${APP_URL}/dashboard?connected=1`)
   } catch (err) {

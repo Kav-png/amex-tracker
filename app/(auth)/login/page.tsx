@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const router = useRouter()
 
   function switchMode(next: Mode) {
     setMode(next)
@@ -42,6 +44,7 @@ export default function LoginPage() {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
       setLoading(false)
       if (authError) setError(authError.message)
+      else router.push("/dashboard")
     } else {
       const { error: authError } = await supabase.auth.signUp({
         email,

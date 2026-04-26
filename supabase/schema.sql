@@ -20,7 +20,7 @@ create table if not exists public.truclayer_connections (
 create table if not exists public.transactions (
   id               uuid primary key default gen_random_uuid(),
   user_id          uuid references auth.users(id) on delete cascade not null,
-  external_id      text unique not null,
+  external_id      text not null,
   amount           numeric(12,2) not null,
   currency         text not null default 'GBP',
   description      text,
@@ -46,6 +46,9 @@ create table if not exists public.custom_categories (
 -- ────────────────────────────────────────────
 -- Indexes
 -- ────────────────────────────────────────────
+
+create unique index if not exists transactions_user_external_id_key
+  on public.transactions (user_id, external_id);
 
 create index if not exists idx_transactions_user_timestamp
   on public.transactions (user_id, timestamp desc);

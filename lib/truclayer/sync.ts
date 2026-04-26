@@ -97,7 +97,7 @@ export async function syncTransactions(
 
     const { error } = await supabase
       .from("transactions")
-      .upsert(rows, { onConflict: "external_id" })
+      .upsert(rows, { onConflict: "user_id,external_id" })
 
     if (error) {
       errors.push(error.message)

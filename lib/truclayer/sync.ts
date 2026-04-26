@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js"
-import { getTransactions, refreshAccessToken, TLTransaction } from "./client"
+import { getCardTransactions, refreshAccessToken, TLTransaction } from "./client"
 
 const CATEGORY_MAP: Record<string, string> = {
   EATING_OUT: "Eating Out",
@@ -75,7 +75,7 @@ export async function syncTransactions(
   const from = fromDate ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
   const to = new Date()
 
-  const tlTransactions = await getTransactions(accessToken, connection.account_id, from, to)
+  const tlTransactions = await getCardTransactions(accessToken, connection.account_id, from, to)
 
   const errors: string[] = []
   let synced = 0

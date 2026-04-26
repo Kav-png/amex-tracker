@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { after } from "next/server"
-import { exchangeCode, getAccounts } from "@/lib/truclayer/client"
+import { exchangeCode, getAccounts, getCards } from "@/lib/truclayer/client"
 import { syncTransactions } from "@/lib/truclayer/sync"
 import { createClient } from "@/lib/supabase/server"
 
@@ -25,13 +25,23 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await exchangeCode(code)
-    const accounts = await getAccounts(tokens.access_token)
 
-    if (!accounts.length) {
-      return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent("No accounts found")}`)
+    // AMEX is a card provider — fall back to /cards if /accounts returns 501
+    let accountId: string
+    const accounts = await getAccounts(tokens.access_token).catch((e: Error) => {
+      if (e.message.includes("501")) return null
+      throw e
+    })
+
+    if (accounts && accounts.length > 0) {
+      accountId = accounts[0].account_id
+    } else {
+      const cards = await getCards(tokens.access_token)
+      if (!cards.length) {
+        return NextResponse.redirect(`${APP_URL}/settings?error=${encodeURIComponent("No accounts found")}`)
+      }
+      accountId = cards[0].account_id
     }
-
-    const account = accounts[0]
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
     await supabase.from("truclayer_connections").upsert(
@@ -40,7 +50,7 @@ export async function GET(request: NextRequest) {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         expires_at: expiresAt,
-        account_id: account.account_id,
+        account_id: accountId,
       },
       { onConflict: "user_id" }
     )

@@ -10,6 +10,14 @@ export type TLAccount = {
   provider: { provider_id: string; display_name: string }
 }
 
+export type TLCard = {
+  account_id: string
+  display_name: string
+  currency: string
+  card_type: string
+  provider: { provider_id: string; display_name: string }
+}
+
 export type TLTransaction = {
   transaction_id: string
   timestamp: string
@@ -85,6 +93,15 @@ export async function getAccounts(accessToken: string): Promise<TLAccount[]> {
   return data.results ?? []
 }
 
+export async function getCards(accessToken: string): Promise<TLCard[]> {
+  const res = await fetch(`${TL_API_URL}/data/v1/cards`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) throw new Error(`TrueLayer cards fetch failed: ${res.status}`)
+  const data = await res.json()
+  return data.results ?? []
+}
+
 export async function getTransactions(
   accessToken: string,
   accountId: string,
@@ -102,6 +119,28 @@ export async function getTransactions(
   if (!res.ok) {
     const body = await res.text()
     throw new Error(`TrueLayer transactions fetch failed (${res.status}): ${body}`)
+  }
+  const data = await res.json()
+  return data.results ?? []
+}
+
+export async function getCardTransactions(
+  accessToken: string,
+  accountId: string,
+  from: Date,
+  to: Date
+): Promise<TLTransaction[]> {
+  const params = new URLSearchParams({
+    from: from.toISOString().split("T")[0],
+    to: to.toISOString().split("T")[0],
+  })
+  const res = await fetch(
+    `${TL_API_URL}/data/v1/cards/${accountId}/transactions?${params}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  )
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`TrueLayer card transactions fetch failed (${res.status}): ${body}`)
   }
   const data = await res.json()
   return data.results ?? []

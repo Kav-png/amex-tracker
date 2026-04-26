@@ -99,7 +99,10 @@ export async function getTransactions(
     `${TL_API_URL}/data/v1/accounts/${accountId}/transactions?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
-  if (!res.ok) throw new Error(`TrueLayer transactions fetch failed: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`TrueLayer transactions fetch failed (${res.status}): ${body}`)
+  }
   const data = await res.json()
   return data.results ?? []
 }

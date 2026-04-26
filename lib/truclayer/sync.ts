@@ -71,8 +71,8 @@ export async function syncTransactions(
 
   const accessToken = await getValidAccessToken(supabase, connection)
 
-  // Default: pull 2 years of history on first sync
-  const from = fromDate ?? new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000)
+  // Default: pull 90 days of history (TrueLayer sandbox limit)
+  const from = fromDate ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
   const to = new Date()
 
   const tlTransactions = await getTransactions(accessToken, connection.account_id, from, to)

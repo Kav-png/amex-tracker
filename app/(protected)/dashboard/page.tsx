@@ -7,6 +7,7 @@ import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector"
 import { CategoryBreakdown } from "@/components/dashboard/CategoryBreakdown"
 import { getDateRange, type TimeRange } from "@/lib/utils"
 import { SyncButton } from "@/components/dashboard/SyncButton"
+import { SyncingBanner } from "@/components/dashboard/SyncingBanner"
 
 export default async function DashboardPage({
   searchParams,
@@ -47,9 +48,7 @@ export default async function DashboardPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Spending</h1>
-          {(params.connected || params.syncing) && (
-            <p className="text-sm text-green-600 mt-0.5">AMEX connected — syncing transactions in the background…</p>
-          )}
+          {(params.connected || params.syncing) && <SyncingBanner />}
         </div>
         {connection && <SyncButton />}
       </div>

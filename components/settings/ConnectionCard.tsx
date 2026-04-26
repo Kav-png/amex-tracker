@@ -18,6 +18,7 @@ export function ConnectionCard({ connection }: ConnectionCardProps) {
   function handleDisconnect() {
     startDisconnect(async () => {
       const supabase = createClient()
+      await supabase.from("transactions").delete().neq("id", "00000000-0000-0000-0000-000000000000")
       await supabase.from("truclayer_connections").delete().neq("id", "00000000-0000-0000-0000-000000000000")
       router.refresh()
     })

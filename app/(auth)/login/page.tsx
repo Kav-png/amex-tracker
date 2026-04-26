@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [mode, setMode] = useState<"magic" | "password">("password")
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -17,18 +19,22 @@ export default function LoginPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
 
-    setLoading(false)
-    if (authError) {
-      setError(authError.message)
+    if (mode === "magic") {
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      setLoading(false)
+      if (authError) setError(authError.message)
+      else setSent(true)
     } else {
-      setSent(true)
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      setLoading(false)
+      if (authError) setError(authError.message)
+      // on success, Supabase redirects via the auth listener in middleware
     }
   }
 
@@ -77,17 +83,47 @@ export default function LoginPage() {
                 />
               </div>
 
+              {mode === "password" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+              )}
+
               {error && (
                 <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
               )}
 
               <Button type="submit" className="w-full" loading={loading}>
-                Send sign-in link
+                {mode === "password" ? "Sign in" : "Send sign-in link"}
               </Button>
             </div>
 
             <p className="text-center text-xs text-gray-400">
-              No password needed — we&apos;ll email you a secure link.
+              {mode === "password" ? (
+                <>
+                  No password?{" "}
+                  <button type="button" onClick={() => { setMode("magic"); setError("") }} className="underline text-gray-500">
+                    Send a magic link instead
+                  </button>
+                </>
+              ) : (
+                <>
+                  Have a password?{" "}
+                  <button type="button" onClick={() => { setMode("password"); setError("") }} className="underline text-gray-500">
+                    Sign in with password
+                  </button>
+                </>
+              )}
             </p>
           </form>
         )}

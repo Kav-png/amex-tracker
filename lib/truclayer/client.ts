@@ -1,4 +1,4 @@
-const SANDBOX = process.env.TRUCLAYER_CLIENT_ID?.startsWith("sandbox-")
+export const SANDBOX = process.env.TRUCLAYER_CLIENT_ID?.startsWith("sandbox-")
 const TL_AUTH_URL = SANDBOX ? "https://auth.truelayer-sandbox.com" : "https://auth.truelayer.com"
 const TL_API_URL = SANDBOX ? "https://api.truelayer-sandbox.com" : "https://api.truelayer.com"
 

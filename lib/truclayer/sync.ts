@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js"
-import { getCardTransactions, refreshAccessToken, TLTransaction } from "./client"
+import { getCardTransactions, refreshAccessToken, SANDBOX, TLTransaction } from "./client"
 
 const CATEGORY_MAP: Record<string, string> = {
   EATING_OUT: "Eating Out",
@@ -71,8 +71,33 @@ export async function syncTransactions(
 
   const accessToken = await getValidAccessToken(supabase, connection)
 
-  // Default: pull 90 days of history (TrueLayer sandbox limit)
-  const from = fromDate ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  const SANDBOX_LIMIT_DAYS = 90
+  const PROD_DEFAULT_BUFFER_DAYS = 7
+  const PROD_FULL_HISTORY_DAYS = 730 // 2 years
+
+  let from: Date
+  if (fromDate) {
+    // Caller supplied explicit date — respect it but cap at sandbox limit in dev
+    from = SANDBOX
+      ? new Date(Math.max(fromDate.getTime(), Date.now() - SANDBOX_LIMIT_DAYS * 24 * 60 * 60 * 1000))
+      : fromDate
+  } else if (SANDBOX) {
+    from = new Date(Date.now() - SANDBOX_LIMIT_DAYS * 24 * 60 * 60 * 1000)
+  } else {
+    // Prod incremental: resume from latest transaction minus buffer for late-posting
+    const { data: latest } = await supabase
+      .from("transactions")
+      .select("timestamp")
+      .eq("user_id", userId)
+      .order("timestamp", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    from = latest?.timestamp
+      ? new Date(new Date(latest.timestamp).getTime() - PROD_DEFAULT_BUFFER_DAYS * 24 * 60 * 60 * 1000)
+      : new Date(Date.now() - PROD_FULL_HISTORY_DAYS * 24 * 60 * 60 * 1000)
+  }
+
   const to = new Date()
 
   const tlTransactions = await getCardTransactions(accessToken, connection.account_id, from, to)
